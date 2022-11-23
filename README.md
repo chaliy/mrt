@@ -4,8 +4,9 @@ cli to serve polyglot monorepo
 
 ## Features
 
-- [ ] Ability to execute "scripts" across monorepo: start, build, test, fmt, etc - `mrt run [script]`
-- [ ] Support for nodejs/npm packages and apps
+- [x] List package in the monorepo - `mrt list`
+- [x] Ability to execute "scripts" across monorepo: start, build, test, fmt, etc - `mrt run [script]`
+- [x] Support for nodejs/npm packages and apps
 - [ ] Support for python/poetry packages and apps
 - [ ] Support for rust/cargo packages and apps
 - [ ] Support for custom packages and apps
