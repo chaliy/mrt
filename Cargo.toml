@@ -1,0 +1,17 @@
+[package]
+name = "mrt"
+version = "1.0.0"
+edition = "2021"
+
+[lib]
+name = "mrt"
+path = "src/mrt/lib.rs"
+
+[dependencies]
+anyhow = "^1.0.0"
+clap = { version = "^4.0.0", features = ["derive"] }
+glob = "^0.3.0"
+jmespath = "^0.3.0"
+log = "^0.4.0"
+serde = { version = "^1.0.0", features = ["derive"] }
+serde_json = "^1.0.0"
