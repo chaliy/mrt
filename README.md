@@ -12,6 +12,15 @@ cli to serve polyglot monorepo
 - [ ] Support for custom packages and apps
 - ...
 
+## How to install
+
+If you have rust/cargo installed, you can install `mrt` with:
+
+```
+cargo install --git https://github.com/chaliy/mrt.git
+mrt --help
+```
+
 ## Idea
 
 Build tool that will help with common operations on polyglot monorepo. Run "scripts" across all packages, do release management, etc. 
