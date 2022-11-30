@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "lib2"
+name = "py_lib2"
 version = "1.0.0"
 description = ""
 authors = ["Mykhailo Chalyi <mike@chaliy.name>"]

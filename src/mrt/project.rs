@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use anyhow::Result;
+use anyhow::{Result, Context};
 use glob::glob;
 use log::warn;
 
@@ -7,23 +7,41 @@ use crate::package::{Package, PackageStatus};
 use crate::manifest::Manifest;
 
 pub struct Project {
-    _manifest_path: PathBuf,
     root_path: PathBuf,
     manifest: Manifest,
 }
 
 impl Project {
-    pub fn new(manifest_path: PathBuf) -> Project {
-        let root_path = match manifest_path.parent() {
-            Some(parent) => parent.to_path_buf(),
-            None => std::env::current_dir().unwrap_or_default()
+
+    pub fn read(manifest_path: Option<PathBuf>) -> Result<Project> {
+
+        let root_path = match manifest_path {
+            Some(path) => {
+                // Here means user specified manifest path 
+                // and we assume he knows what he is doing
+                let manifest_path = path.canonicalize()?;
+
+                manifest_path.parent()
+                    .with_context(|| format!("Manifest path {:?} has no parent, cannot determine project root", manifest_path))?
+                    .canonicalize()?
+            },
+            None => std::env::current_dir()?
         };
 
-        Project {
-            _manifest_path: manifest_path,
+        Ok(Project {
             root_path,
             manifest: Manifest::new()
-        }
+        })
+    }
+    
+    pub fn get_root_path(&self) -> &PathBuf {
+        &self.root_path
+    }
+
+    pub fn get_relative_path(&self, path: &PathBuf) -> Result<PathBuf> {
+        Ok(path
+            .strip_prefix(&self.root_path)?
+            .to_path_buf())
     }
 
     pub fn get_packages(&self, all: bool) -> Vec<Package> {
@@ -34,8 +52,7 @@ impl Project {
             let rooted_package_glob = self.root_path.join(&package_glob);
 
             let full_glob = rooted_package_glob.to_str()
-                .expect(&format!("convert path `{}` to string", rooted_package_glob.display()));
-
+                .expect(&format!("Convert path `{}` to string", rooted_package_glob.display()));
 
             match glob(&full_glob) {
                 Ok(paths) => {
@@ -43,24 +60,27 @@ impl Project {
                         .filter_map(Result::ok)
                         .filter(|path| path.is_dir())
                         .for_each(|path| {
-                            let package = Package::from_package_path(path);
+                            let package = Package::from_package_path(
+                                path,
+                                self.root_path.clone()
+                            );
 
                             match package.status {
                                 PackageStatus::Valid => {
                                     packages.push(package);
                                 },
-                                PackageStatus::CannotRead => {
+                                PackageStatus::CannotRead(ref message) => {
                                     if all {
                                         packages.push(package);
                                     } else {
-                                        warn!("Cannot read package at path '{}': {}", package.path.display(), package.status_message.unwrap());
+                                        warn!("Cannot read package at path '{}': {}", package.path, message);
                                     }
                                 },
-                                PackageStatus::CannotDetect => {
+                                PackageStatus::CannotDetectArchetype => {
                                     if all {
                                         packages.push(package);
                                     } else {
-                                        warn!("Cannot detect package archetype at path '{}': {}", package.path.display(), package.status_message.unwrap());
+                                        warn!("Cannot detect package archetype at path '{}'", package.path);
                                     }
                                 }
                             }
