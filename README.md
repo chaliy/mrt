@@ -44,5 +44,5 @@ Build tool that will help with common operations on polyglot monorepo. Run "scri
 
 ## Inspiration
 
-- Lerna - NodeJS monorepo tool
+- Lerna / Nx - NodeJS monorepo tools
 - Bazel - monorepo build tool

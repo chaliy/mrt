@@ -1,80 +1,86 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, fmt::{Formatter, Display}};
 use serde::{Serialize, Deserialize};
-use crate::archetypes::{match_archetype, get_archetype_by_id};
-use crate::runners::{PackageScriptRunContext, PackageScriptRunResult};
+use tabled::Tabled;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+use crate::archetypes::detect_archetype;
+
+#[derive(Clone, Debug)]
+#[derive(Serialize, Deserialize)]
+#[derive(Tabled)]
 pub struct Package {
     pub name: String,
-    pub path: PathBuf,
+    pub version: String,
+    pub path: String,
+    #[tabled(skip)]
+    pub absolute_path: PathBuf,
     pub archetype_id: String,
     pub status: PackageStatus,
-    pub status_message: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Clone, Debug)]
+#[derive(Serialize, Deserialize)]
 pub enum PackageStatus {
     Valid,
-    CannotRead,
-    CannotDetect
+    CannotRead(String),
+    CannotDetectArchetype
+}
+
+impl Display for PackageStatus {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PackageStatus::Valid => write!(f, "Valid"),
+            PackageStatus::CannotRead(message) => write!(f, "Error: {}", message),
+            PackageStatus::CannotDetectArchetype => write!(f, "Cannot detect archetype")
+        }
+    }
 }
 
 impl Package {
-    fn unknown(package_path: PathBuf) -> Package {
-        Package {
-            name: String::from("unknown"),
-            path: package_path,
-            archetype_id: String::from("unknown"),
-            status: PackageStatus::CannotDetect,
-            status_message: Some(String::from("Cannot detect package archetype"))
-        }
-    }
-    fn error(package_path: PathBuf, err: anyhow::Error) -> Package {
-        Package {
-            name: String::from("error"),
-            path: package_path,
-            archetype_id: String::from("error"),
-            status: PackageStatus::CannotRead,
-            status_message: Some(err.to_string())
-        }
-    }
-    pub fn from_package_path(package_path: PathBuf) -> Package {
-        match match_archetype(&package_path) {
+    pub fn from_package_path(package_path: PathBuf, project_path: PathBuf) -> Package {
+        let absolute_path = package_path.canonicalize().unwrap();
+
+        let path = absolute_path
+                .strip_prefix(&project_path)
+                .unwrap().to_str().unwrap_or("n/a").to_string();
+
+        match detect_archetype(&absolute_path) {
             Some(archetype) => {
-                match archetype.get_info_extractor(&package_path) {
+                match archetype.get_info_extractor(&absolute_path) {
                     Ok(extractor) => {
                         return Package {
                             name: extractor.get_name().to_string(),
-                            path: package_path,
+                            version: extractor.get_version().to_string(),
+                            path,
+                            absolute_path,
                             archetype_id: archetype.get_id().to_string(),
-                            status: PackageStatus::Valid,
-                            status_message: None
+                            status: PackageStatus::Valid
                         }
                     },
                     Err(err) => {
-                        return Package::error(package_path, err);
+                        // Archetype detected, but cannot read package info
+                        return Package {
+                            name: String::from("n/a"),
+                            version: String::from("n/a"),
+                            path,
+                            absolute_path,
+                            archetype_id: archetype.get_id().to_string(),
+                            status: PackageStatus::CannotRead(err.to_string())
+                        }
                     },
                 }
             },
             None => {
-                return Package::unknown(package_path);
+                return Package {
+                    name: String::from("n/a"),
+                    version:  String::from("n/a"),
+                    path,
+                    absolute_path,
+                    archetype_id: String::default(),
+                    status: PackageStatus::CannotDetectArchetype
+                }
             }
         }
     }
-    
-    pub fn run_script(&self, script_spec: &String) -> PackageScriptRunResult {
-
-        println!("Running script '{script_spec}' for package '{}'", self.name);
-
-        let script_runner = get_archetype_by_id(self.archetype_id.as_str())
-            .unwrap()
-            .get_script_runner();
-            
-        return script_runner.run_script(script_spec, &PackageScriptRunContext {
-            package: self
-        });
-    }
-
     
 }
 

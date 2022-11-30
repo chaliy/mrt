@@ -19,7 +19,7 @@ fn get_archetypes() -> Vec<Box<dyn Archetype>> {
     ]
 }
 
-pub fn match_archetype(package_path: &PathBuf) -> Option<Box<dyn Archetype>> {
+pub fn detect_archetype(package_path: &PathBuf) -> Option<Box<dyn Archetype>> {
     let archetypes = get_archetypes();
     for archetype in archetypes {
         if archetype.matcher(package_path) {

@@ -5,11 +5,12 @@ use serde::Deserialize;
 use crate::{package::PackageInfoExtractor};
 
 pub struct NpmPackageInfoExtractor {
-    package_json: NpmPackageJSON
+    npm_package: NpmPackage
 }
 
+// Structure represents package.json info
 #[derive(Deserialize, Debug)]
-struct NpmPackageJSON {
+struct NpmPackage {
     name: String,
     version: String,
 }
@@ -27,18 +28,18 @@ impl NpmPackageInfoExtractor {
             .with_context(|| format!("Failed to parse JSON of package.json file at {}", package_json_path.display()))?;
 
         return Ok(NpmPackageInfoExtractor {
-            package_json
+            npm_package: package_json
         });
     }
 }
 
 impl PackageInfoExtractor for NpmPackageInfoExtractor {
     fn get_name(&self) -> &str {
-        return self.package_json.name.as_str();
+        return self.npm_package.name.as_str();
     }
 
     fn get_version(&self) -> &str {
-        return self.package_json.version.as_str();
+        return self.npm_package.version.as_str();
     }
 }
 
@@ -58,7 +59,7 @@ fn test_from_package_path_invalid_package_json() {
 
 #[test]
 fn test_from_package_path_success() {
-    let lib1_path = crate::testing::utils::get_repo_root().join("./examples/basic-sample/packages/lib1");
+    let lib1_path = crate::testing::utils::get_repo_root().join("./examples/basic-sample/packages/node-lib1");
     let result = NpmPackageInfoExtractor::from_package_path(&lib1_path).unwrap();
-    assert_eq!(result.package_json.name, "lib1");
+    assert_eq!(result.npm_package.name, "node-lib1");
 }

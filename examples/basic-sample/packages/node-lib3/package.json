@@ -1,0 +1,12 @@
+{
+  "name": "node-lib13",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo \"Running build!\" && sleep 1 && echo \"Build done!\"",
+    "format": "echo \"Format competed!\""
+  },
+  "author": "",
+  "license": "ISC"
+}
