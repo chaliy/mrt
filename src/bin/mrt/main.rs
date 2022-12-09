@@ -1,5 +1,6 @@
 use std::path::PathBuf;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, CommandFactory, ValueHint};
+use clap_complete::{generate, Shell};
 use serde::ser;
 use commands::{list::ListArgs, run_script::RunScriptArgs, CommandExecutionContext, CommandExec};
 use output::write_command_stdout_as_json;
@@ -16,7 +17,7 @@ pub struct Cli {
     command: Option<Commands>,
 
     /// Path to the manifest file
-    #[arg(short, long, global = true)]
+    #[arg(short, long, global = true, value_hint = ValueHint::FilePath)]
     manifest: Option<String>,
 
     /// Type of the output format
@@ -35,6 +36,11 @@ pub enum Commands {
     List(ListArgs),
     /// run scripts in all monorepo packages
     Run(RunScriptArgs),
+    /// outputs the completion file for given shell
+    Completion {
+        #[arg(index = 1, value_enum)]
+        shell: Shell
+    },
 }
 
 impl Cli {
@@ -60,7 +66,7 @@ impl CommandExecutionContext for Cli {
             .and_then(|m| Some(PathBuf::from(m)));
         
         return Project::read(manifest_path)
-            .expect("Failed to read project manifest")
+            .expect("Failed to read project manifest");
     }
 
     fn get_cli(&self) -> &Cli {
@@ -79,6 +85,17 @@ fn main() {
         Some(Commands::Run(args)) => {
             cli.exec_command(args);
         }
+        Some(Commands::Completion{ shell }) => {
+            let mut cmd = Cli::command();
+            let name = cmd.get_name().to_string();
+            generate(*shell, &mut cmd,name, &mut std::io::stdout());
+        }
         None => {}
     }
+}
+
+
+#[test]
+fn verify_cli() {
+    Cli::command().debug_assert();
 }

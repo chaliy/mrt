@@ -21,6 +21,14 @@ cargo install --git https://github.com/chaliy/mrt.git
 mrt --help
 ```
 
+### ZSH
+
+```
+mrt completion zsh > $ZSH/cache/completions/_mrt
+compinit
+mrt <TAB>
+```
+
 ## Idea
 
 Build tool that will help with common operations on polyglot monorepo. Run "scripts" across all packages, do release management, etc. 

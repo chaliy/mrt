@@ -9,7 +9,8 @@ path = "src/mrt/lib.rs"
 
 [dependencies]
 anyhow = "^1.0.0"
-clap = { version = "^4.0.0", features = ["derive"] }
+clap = { version = "^4.0.29", features = ["derive"] }
+clap_complete = "^4.0.6"
 console = "^0.15.2"
 glob = "^0.3.0"
 indicatif = "^0.17.2"
