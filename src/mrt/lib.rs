@@ -7,3 +7,4 @@ pub mod progress;
 mod testing;
 mod nodejs_npm;
 mod python_poetry;
+pub mod change_detection;

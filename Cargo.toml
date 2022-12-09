@@ -1,3 +1,5 @@
+#:schema https://json.schemastore.org/cargo.json
+
 [package]
 name = "mrt"
 version = "1.0.0"
@@ -12,6 +14,7 @@ anyhow = "^1.0.0"
 clap = { version = "^4.0.0", features = ["derive"] }
 console = "^0.15.2"
 glob = "^0.3.0"
+ignore = "^0.4.18"
 indicatif = "^0.17.2"
 jmespath = "^0.3.0"
 log = "^0.4.0"
@@ -19,3 +22,14 @@ serde = { version = "^1.0.0", features = ["derive"] }
 serde_json = "^1.0.0"
 tabled = { version = "^0.10.0", features = ["color"] }
 toml = "^0.5.9"
+blake3 = { version = "1", features = ["rayon"] }
+hex = "0.4.0"
+memmap2 = "0.5.3"
+
+[dev-dependencies]
+criterion = { version = "0.3", features = ["html_reports"] }
+
+
+[[bench]]
+name = "change_detection"
+harness = false
