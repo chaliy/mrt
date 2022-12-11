@@ -3,12 +3,12 @@ use anyhow::Result;
 
 use crate::nodejs_npm::NodeJSNpmArchetype;
 use crate::python_poetry::PythonPoetryArchetype;
-use crate::runners::PackageScriptRunner;
+use crate::runners::ScriptRunner;
 
 pub trait Archetype {
     fn get_id(&self) -> &str;
     fn matcher(&self, package_path: &PathBuf) -> bool;
-    fn get_script_runner(&self) -> Box<dyn PackageScriptRunner>;
+    fn get_script_runner(&self) -> Box<dyn ScriptRunner>;
     fn get_info_extractor(&self, package_path: &PathBuf) -> Result<Box<dyn crate::package::PackageInfoExtractor>>;
 }
 

@@ -60,7 +60,7 @@ fn test_from_package_path_no_folder_exists() {
 
 #[test]
 fn test_from_package_path_success() {
-    let lib1_path = crate::testing::utils::get_repo_root().join("./examples/basic-sample/packages/py-lib2");
+    let lib1_path = crate::testing::utils::get_repo_root().join("./references/basic-sample/packages/py-lib2");
     let result = PoetryPackageInfoExtractor::from_package_path(&lib1_path).unwrap();
     assert_eq!(result.get_name(), "py_lib2");
 }

@@ -1,6 +1,7 @@
 use std::thread;
 use std::time::Duration;
 
+use anyhow::Result;
 use clap::Args;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use console::style;
@@ -9,7 +10,7 @@ use serde::{Serialize, Deserialize};
 use mrt::archetypes::get_archetype_by_id;
 use mrt::progress::ProgressReporter;
 use mrt::{package::Package};
-use mrt::runners::{PackageScriptRunResult, PackageScriptRunContext, PackageScriptRunResultType};
+use mrt::runners::{ScriptRunResult, ScriptRunContext, ScriptRunResultType};
 
 use super::{CommandResult, ProgressBarReporter, CommandExec, NoopProgressReporter};
 
@@ -21,7 +22,7 @@ pub struct PackageResult<TResult> {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RunScriptResult {
-    results: Vec<PackageResult<PackageScriptRunResult>>
+    results: Vec<PackageResult<ScriptRunResult>>
 }
 
 impl CommandResult<RunScriptResult> for RunScriptResult {
@@ -37,12 +38,13 @@ pub struct RunScriptArgs {
     pub script_spec: String
 }
 
-fn exec_package(package: &Package, script_spec: &str, reporter: &impl ProgressReporter) -> PackageScriptRunResult {
+fn exec_package(package: &Package, script_spec: &str, reporter: &impl ProgressReporter) -> Result<ScriptRunResult> {
     let script_runner = get_archetype_by_id(package.archetype_id.as_str())
         .unwrap()
         .get_script_runner();
 
-    let result = script_runner.run_script(script_spec, &PackageScriptRunContext {
+    let result = script_runner.run_script(&ScriptRunContext {
+        script_spec,
         package,
         reporter
     });
@@ -52,7 +54,7 @@ fn exec_package(package: &Package, script_spec: &str, reporter: &impl ProgressRe
 
 impl RunScriptArgs {
 
-    fn exec_interactive(&self, packages: &Vec<Package>) -> Vec<PackageResult<PackageScriptRunResult>> {
+    fn exec_interactive(&self, packages: &Vec<Package>) -> Vec<PackageResult<ScriptRunResult>> {
         let spinner_style = ProgressStyle::with_template("{prefix:.bold.dim} {spinner} {wide_msg}")
             .unwrap()
             .tick_chars("⠁⠂⠄⡀⢀⠠⠐⠈ ");
@@ -75,18 +77,16 @@ impl RunScriptArgs {
                         progress_bar: &progress_bar
                     };
     
-                    let result = exec_package(&package, &script_spec, &reporter);
+                    let result = exec_package(&package, &script_spec, &reporter).unwrap();
 
                     match result.result_type {
-                        PackageScriptRunResultType::Success => {
+                        ScriptRunResultType::Success => {
                             progress_bar.finish_with_message(format!("{}: {} ✨", result.command, style("Done").green()));
                         },
-                        PackageScriptRunResultType::Error(ref message) => {
+                        ScriptRunResultType::Error(ref message) => {
                             progress_bar.finish_with_message(format!("{}: {} ❌\n{}", result.command, style(message).red(), result.stderr));
                         },
-                        PackageScriptRunResultType::Noop => {
-                            progress_bar.finish_with_message(format!("Skipped! ⏭️"));
-                        }
+                        ScriptRunResultType::Noop => progress_bar.finish_with_message(format!("Skipped! ⏭️"))
                     }
 
                     return PackageResult {
@@ -101,7 +101,7 @@ impl RunScriptArgs {
             .collect();
     }
 
-    fn exec_non_interactive(&self, packages: &Vec<Package>) -> Vec<PackageResult<PackageScriptRunResult>> {
+    fn exec_non_interactive(&self, packages: &Vec<Package>) -> Vec<PackageResult<ScriptRunResult>> {
 
         return packages
             .iter()
@@ -113,7 +113,7 @@ impl RunScriptArgs {
                 
                     let reporter = NoopProgressReporter{};
 
-                    let result = exec_package(&package, &script_spec, &reporter);
+                    let result = exec_package(&package, &script_spec, &reporter).unwrap();
 
                     return PackageResult {
                         package: package.clone(),

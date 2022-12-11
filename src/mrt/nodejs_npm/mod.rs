@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{Result,Context};
 
-use crate::{archetypes::Archetype, package::PackageInfoExtractor};
+use crate::{archetypes::Archetype, package::PackageInfoExtractor, runners::WrapperScriptRunner};
 
 use self::{runner::NpmPackageScriptRunner, info::NpmPackageInfoExtractor};
 
@@ -20,8 +20,10 @@ impl Archetype for NodeJSNpmArchetype {
         package_path.join("package.json").exists()
     }
 
-    fn get_script_runner(&self) -> Box<dyn crate::runners::PackageScriptRunner> {
-        Box::from(NpmPackageScriptRunner {})
+    fn get_script_runner(&self) -> Box<dyn crate::runners::ScriptRunner> {
+        Box::from(WrapperScriptRunner::wrap_with_generic_runners(
+            Box::from(NpmPackageScriptRunner::new())
+        ))
     }
 
     fn get_info_extractor(&self, package_path: &PathBuf) -> Result<Box<dyn PackageInfoExtractor>> {

@@ -1,4 +1,5 @@
 use std::{path::PathBuf, fmt::{Formatter, Display}};
+use anyhow::Result;
 use serde::{Serialize, Deserialize};
 use tabled::Tabled;
 
@@ -36,48 +37,48 @@ impl Display for PackageStatus {
 }
 
 impl Package {
-    pub fn from_package_path(package_path: PathBuf, project_path: PathBuf) -> Package {
-        let absolute_path = package_path.canonicalize().unwrap();
-
+    pub fn from_package_path(package_path: PathBuf, project_path: PathBuf) -> Result<Package> {
+        let absolute_path = package_path.canonicalize()?;
+        
         let path = absolute_path
-                .strip_prefix(&project_path)
-                .unwrap().to_str().unwrap_or("n/a").to_string();
+                .strip_prefix(&project_path)?
+                .to_str().unwrap_or("n/a").to_string();
 
         match detect_archetype(&absolute_path) {
             Some(archetype) => {
                 match archetype.get_info_extractor(&absolute_path) {
                     Ok(extractor) => {
-                        return Package {
+                        return Ok(Package {
                             name: extractor.get_name().to_string(),
                             version: extractor.get_version().to_string(),
                             path,
                             absolute_path,
                             archetype_id: archetype.get_id().to_string(),
                             status: PackageStatus::Valid
-                        }
+                        })
                     },
                     Err(err) => {
                         // Archetype detected, but cannot read package info
-                        return Package {
+                        return Ok(Package {
                             name: String::from("n/a"),
                             version: String::from("n/a"),
                             path,
                             absolute_path,
                             archetype_id: archetype.get_id().to_string(),
                             status: PackageStatus::CannotRead(err.to_string())
-                        }
+                        })
                     },
                 }
             },
             None => {
-                return Package {
+                return Ok(Package {
                     name: String::from("n/a"),
                     version:  String::from("n/a"),
                     path,
                     absolute_path,
                     archetype_id: String::default(),
                     status: PackageStatus::CannotDetectArchetype
-                }
+                })
             }
         }
     }
