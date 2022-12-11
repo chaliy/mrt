@@ -1,0 +1,4 @@
+name: mrt-lib4
+version: 1.0.0
+scripts:
+  format: echo "Format competed!"

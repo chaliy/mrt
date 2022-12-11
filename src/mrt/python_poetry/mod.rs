@@ -1,10 +1,10 @@
 use std::{path::PathBuf, fs};
 
-use anyhow::Context;
+use anyhow::{Result, Context};
 
 use crate::{
     archetypes::Archetype, 
-    runners::NoopPackageScriptRunner, 
+    runners::WrapperScriptRunner, 
     package::PackageInfoExtractor
 };
 
@@ -30,14 +30,40 @@ impl Archetype for PythonPoetryArchetype {
         return false;
     }
 
-    fn get_script_runner(&self) -> Box<dyn crate::runners::PackageScriptRunner> {
-        Box::from(NoopPackageScriptRunner {})
+    fn get_script_runner(&self) -> Box<dyn crate::runners::ScriptRunner> {
+        Box::from(WrapperScriptRunner::generic_runners())
     }
 
-    fn get_info_extractor(&self, package_path: &PathBuf) -> anyhow::Result<Box<dyn PackageInfoExtractor>> {
+    fn get_info_extractor(&self, package_path: &PathBuf) -> Result<Box<dyn PackageInfoExtractor>> {
         let extractor = PoetryPackageInfoExtractor::from_package_path(package_path)
             .context(format!("Get information extractor for package {}", package_path.display()))?;
 
         return Ok(Box::from(extractor));
     }
+}
+
+
+#[test]
+fn test_script_runner_make() -> anyhow::Result<()> {
+    let project_path = crate::testing::utils::get_repo_root().join("./references/basic-sample/mrt.yml");
+    let project = crate::project::Project::read(Some(project_path))?;
+    let package = project.read_package(std::path::PathBuf::from("./packages/py-lib2"))?;
+
+    let archetype = PythonPoetryArchetype{};
+
+    let runner = archetype.get_script_runner();
+
+    let context = crate::runners::ScriptRunContext {
+        script_spec: "format",
+        package: &package,
+        reporter: &crate::progress::LogProgressReporter{}
+    };
+
+    assert!(runner.can_run_script(&context)?);
+
+    let result = runner.run_script(&context)?;
+
+    assert!(result.result_type.is_success(), "stderr: {:?}", result.stderr);
+
+    Ok(())
 }

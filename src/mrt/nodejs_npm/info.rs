@@ -46,20 +46,26 @@ impl PackageInfoExtractor for NpmPackageInfoExtractor {
 #[test]
 fn test_from_package_path_no_folder_exists() {
     let non_existing_package_path = PathBuf::from("does-not-exist");
+    
     let result = NpmPackageInfoExtractor::from_package_path(&non_existing_package_path);
+    
     assert!(result.is_err());
 }
 
 #[test]
 fn test_from_package_path_invalid_package_json() {
     let invalid_package_json_lib_path = PathBuf::from(file!()).parent().unwrap().join("./fixures/invalid-package-json-lib");
+    
     let result = NpmPackageInfoExtractor::from_package_path(&invalid_package_json_lib_path);
+    
     assert!(result.is_err());
 }
 
 #[test]
 fn test_from_package_path_success() {
-    let lib1_path = crate::testing::utils::get_repo_root().join("./examples/basic-sample/packages/node-lib1");
+    let lib1_path = crate::testing::utils::get_repo_root().join("./references/basic-sample/packages/node-lib1");
+    
     let result = NpmPackageInfoExtractor::from_package_path(&lib1_path).unwrap();
+    
     assert_eq!(result.npm_package.name, "node-lib1");
 }

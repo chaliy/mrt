@@ -1,0 +1,2 @@
+format:
+	echo "Format competed!"

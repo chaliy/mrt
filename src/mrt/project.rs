@@ -6,6 +6,7 @@ use log::warn;
 use crate::package::{Package, PackageStatus};
 use crate::manifest::Manifest;
 
+#[derive(Debug)]
 pub struct Project {
     root_path: PathBuf,
     manifest: Manifest,
@@ -13,6 +14,7 @@ pub struct Project {
 
 impl Project {
 
+    /// Read project from manifest path if defined. if not will use current directory and mrt.yml file
     pub fn read(manifest_path: Option<PathBuf>) -> Result<Project> {
 
         let root_path = match manifest_path {
@@ -38,10 +40,11 @@ impl Project {
         &self.root_path
     }
 
-    pub fn get_relative_path(&self, path: &PathBuf) -> Result<PathBuf> {
-        Ok(path
-            .strip_prefix(&self.root_path)?
-            .to_path_buf())
+    pub fn read_package(&self, package_path: PathBuf) -> Result<Package> {
+        return Package::from_package_path(
+            self.root_path.join(package_path),
+            self.root_path.clone()
+        );
     }
 
     pub fn get_packages(&self, all: bool) -> Vec<Package> {
@@ -60,10 +63,7 @@ impl Project {
                         .filter_map(Result::ok)
                         .filter(|path| path.is_dir())
                         .for_each(|path| {
-                            let package = Package::from_package_path(
-                                path,
-                                self.root_path.clone()
-                            );
+                            let package = self.read_package(path).unwrap();
 
                             match package.status {
                                 PackageStatus::Valid => {

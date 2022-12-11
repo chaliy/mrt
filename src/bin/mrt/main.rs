@@ -8,6 +8,7 @@ use mrt::project::Project;
 
 mod commands;
 mod output;
+mod testing;
 
 /// MRT - MonoRepo Tool
 #[derive(Parser)]
@@ -18,7 +19,7 @@ pub struct Cli {
 
     /// Path to the manifest file
     #[arg(short, long, global = true, value_hint = ValueHint::FilePath)]
-    manifest: Option<String>,
+    manifest: Option<PathBuf>,
 
     /// Type of the output format
     #[arg(short, long, global = true)]
@@ -73,7 +74,6 @@ impl CommandExecutionContext for Cli {
         self
     }
 }
-
 
 fn main() {
     let cli = Cli::parse();
