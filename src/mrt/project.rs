@@ -94,7 +94,7 @@ impl Project {
                         });
                 }
                 Err(err) => {
-                    warn!("Package glob {} failed: {}. Ignoring.", &full_glob, err);
+                    warn!("Package glob {} failed: {}. Ignoring.", full_glob, err);
                     continue;
                 }
             }

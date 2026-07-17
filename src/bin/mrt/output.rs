@@ -1,5 +1,5 @@
 use serde::ser;
-use std::io::{stdout, Write};
+use std::io::{Write, stdout};
 
 use crate::commands::CommandResult;
 

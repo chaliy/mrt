@@ -1,22 +1,21 @@
 [package]
 name = "mrt"
 version = "1.0.0"
-edition = "2021"
+edition = "2024"
 
 [lib]
 name = "mrt"
 path = "src/mrt/lib.rs"
 
 [dependencies]
-anyhow = "^1.0.0"
-clap = { version = "^4.0.29", features = ["derive"] }
-clap_complete = "^4.0.6"
-console = "^0.15.2"
-glob = "^0.3.0"
-indicatif = "^0.17.2"
-jmespath = "^0.3.0"
-log = "^0.4.0"
-serde = { version = "^1.0.0", features = ["derive"] }
-serde_json = "^1.0.0"
-tabled = { version = "^0.10.0", features = ["color"] }
-toml = "^0.5.9"
+anyhow = "1"
+clap = { version = "4.6", features = ["derive"] }
+clap_complete = "4.6"
+console = "0.16"
+glob = "0.3"
+indicatif = "0.18"
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tabled = { version = "0.21", default-features = false, features = ["ansi"] }
+toml = "1.1"

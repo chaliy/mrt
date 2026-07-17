@@ -4,16 +4,14 @@ use std::{
     fmt::{Display, Formatter},
     path::PathBuf,
 };
-use tabled::Tabled;
 
 use crate::archetypes::detect_archetype;
 
-#[derive(Clone, Debug, Serialize, Deserialize, Tabled)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Package {
     pub name: String,
     pub version: String,
     pub path: String,
-    #[tabled(skip)]
     pub absolute_path: PathBuf,
     pub archetype_id: String,
     pub status: PackageStatus,
