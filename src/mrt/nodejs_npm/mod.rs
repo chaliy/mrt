@@ -1,13 +1,13 @@
-use std::path::PathBuf;
+use std::path::Path;
 
-use anyhow::{Result,Context};
+use anyhow::{Context, Result};
 
 use crate::{archetypes::Archetype, package::PackageInfoExtractor, runners::WrapperScriptRunner};
 
-use self::{runner::NpmPackageScriptRunner, info::NpmPackageInfoExtractor};
+use self::{info::NpmPackageInfoExtractor, runner::NpmPackageScriptRunner};
 
-mod runner;
 mod info;
+mod runner;
 
 pub struct NodeJSNpmArchetype {}
 
@@ -16,20 +16,23 @@ impl Archetype for NodeJSNpmArchetype {
         "nodejs/npm"
     }
 
-    fn matcher(&self, package_path: &PathBuf) -> bool {
+    fn matcher(&self, package_path: &Path) -> bool {
         package_path.join("package.json").exists()
     }
 
     fn get_script_runner(&self) -> Box<dyn crate::runners::ScriptRunner> {
-        Box::from(WrapperScriptRunner::wrap_with_generic_runners(
-            Box::from(NpmPackageScriptRunner::new())
-        ))
+        Box::from(WrapperScriptRunner::wrap_with_generic_runners(Box::from(
+            NpmPackageScriptRunner::new(),
+        )))
     }
 
-    fn get_info_extractor(&self, package_path: &PathBuf) -> Result<Box<dyn PackageInfoExtractor>> {
-        let extractor = NpmPackageInfoExtractor::from_package_path(package_path)
-            .context(format!("Get information extractor for package {}", package_path.display()))?;
+    fn get_info_extractor(&self, package_path: &Path) -> Result<Box<dyn PackageInfoExtractor>> {
+        let extractor =
+            NpmPackageInfoExtractor::from_package_path(package_path).context(format!(
+                "Get information extractor for package {}",
+                package_path.display()
+            ))?;
 
-        return Ok(Box::from(extractor));
+        Ok(Box::from(extractor))
     }
 }

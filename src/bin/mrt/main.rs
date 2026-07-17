@@ -1,13 +1,14 @@
-use std::path::PathBuf;
-use clap::{Parser, Subcommand, CommandFactory, ValueHint};
+use clap::{CommandFactory, Parser, Subcommand, ValueHint};
 use clap_complete::{generate, Shell};
-use serde::ser;
-use commands::{list::ListArgs, run_script::RunScriptArgs, CommandExecutionContext, CommandExec};
-use output::write_command_stdout_as_json;
+use commands::{list::ListArgs, run_script::RunScriptArgs, CommandExec, CommandExecutionContext};
 use mrt::project::Project;
+use output::write_command_stdout_as_json;
+use serde::ser;
+use std::path::PathBuf;
 
 mod commands;
 mod output;
+#[cfg(test)]
 mod testing;
 
 /// MRT - MonoRepo Tool
@@ -28,7 +29,7 @@ pub struct Cli {
 
 #[derive(clap::ValueEnum, Clone)]
 enum Output {
-   Json
+    Json,
 }
 
 #[derive(Subcommand)]
@@ -40,18 +41,19 @@ pub enum Commands {
     /// outputs the completion file for given shell
     Completion {
         #[arg(index = 1, value_enum)]
-        shell: Shell
+        shell: Shell,
     },
 }
 
 impl Cli {
-    fn exec_command<T>(&self, executor: &impl CommandExec<T>) 
-        where T: ser::Serialize {
+    fn exec_command<T>(&self, executor: &impl CommandExec<T>)
+    where
+        T: ser::Serialize,
+    {
         let result = executor.exec(self);
 
-        match self.output {
-            Some(Output::Json) => write_command_stdout_as_json(&result),
-            _ => ()
+        if let Some(Output::Json) = self.output {
+            write_command_stdout_as_json(&*result)
         }
     }
 
@@ -62,12 +64,9 @@ impl Cli {
 
 impl CommandExecutionContext for Cli {
     fn get_project(&self) -> Project {
-        let manifest_path = self.manifest
-            .as_ref()
-            .and_then(|m| Some(PathBuf::from(m)));
-        
-        return Project::read(manifest_path)
-            .expect("Failed to read project manifest");
+        let manifest_path = self.manifest.as_ref().map(PathBuf::from);
+
+        Project::read(manifest_path).expect("Failed to read project manifest")
     }
 
     fn get_cli(&self) -> &Cli {
@@ -85,15 +84,14 @@ fn main() {
         Some(Commands::Run(args)) => {
             cli.exec_command(args);
         }
-        Some(Commands::Completion{ shell }) => {
+        Some(Commands::Completion { shell }) => {
             let mut cmd = Cli::command();
             let name = cmd.get_name().to_string();
-            generate(*shell, &mut cmd,name, &mut std::io::stdout());
+            generate(*shell, &mut cmd, name, &mut std::io::stdout());
         }
         None => {}
     }
 }
-
 
 #[test]
 fn verify_cli() {

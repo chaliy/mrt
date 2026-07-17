@@ -1,6 +1,6 @@
 #[cfg(test)]
 pub mod utils {
-    use std::{path::PathBuf, env};
+    use std::{env, path::PathBuf};
 
     pub fn get_repo_root() -> PathBuf {
         let mut path = env::current_dir().unwrap();

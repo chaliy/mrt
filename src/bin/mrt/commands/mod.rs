@@ -1,7 +1,7 @@
-use indicatif::{ProgressBar};
+use indicatif::ProgressBar;
 use serde::ser;
 
-use mrt::{project::Project, progress::ProgressReporter};
+use mrt::{progress::ProgressReporter, project::Project};
 
 use crate::Cli;
 
@@ -14,17 +14,21 @@ pub trait CommandExecutionContext {
 }
 
 pub trait CommandExec<T>
-    where T: ser::Serialize {
-        fn exec(&self, context: &impl CommandExecutionContext) -> Box<dyn CommandResult<T>>;
+where
+    T: ser::Serialize,
+{
+    fn exec(&self, context: &impl CommandExecutionContext) -> Box<dyn CommandResult<T>>;
 }
 
-pub trait CommandResult<T> 
-    where T: ser::Serialize {
+pub trait CommandResult<T>
+where
+    T: ser::Serialize,
+{
     fn get_result(&self) -> &T;
 }
 
 pub(super) struct ProgressBarReporter<'a> {
-    pub progress_bar: &'a ProgressBar
+    pub progress_bar: &'a ProgressBar,
 }
 
 impl<'a> ProgressReporter for ProgressBarReporter<'a> {
@@ -33,10 +37,8 @@ impl<'a> ProgressReporter for ProgressBarReporter<'a> {
     }
 }
 
-pub(super) struct NoopProgressReporter {
-}
+pub(super) struct NoopProgressReporter {}
 
 impl ProgressReporter for NoopProgressReporter {
-    fn report_output(&self, _message: &str) {
-    }
+    fn report_output(&self, _message: &str) {}
 }

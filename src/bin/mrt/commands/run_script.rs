@@ -3,31 +3,31 @@ use std::time::Duration;
 
 use anyhow::Result;
 use clap::Args;
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use console::style;
-use serde::{Serialize, Deserialize};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use serde::{Deserialize, Serialize};
 
 use mrt::archetypes::get_archetype_by_id;
+use mrt::package::Package;
 use mrt::progress::ProgressReporter;
-use mrt::{package::Package};
-use mrt::runners::{ScriptRunResult, ScriptRunContext, ScriptRunResultType};
+use mrt::runners::{ScriptRunContext, ScriptRunResult, ScriptRunResultType};
 
-use super::{CommandResult, ProgressBarReporter, CommandExec, NoopProgressReporter};
+use super::{CommandExec, CommandResult, NoopProgressReporter, ProgressBarReporter};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PackageResult<TResult> {
     pub package: Package,
-    pub result: TResult
+    pub result: TResult,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RunScriptResult {
-    results: Vec<PackageResult<ScriptRunResult>>
+    results: Vec<PackageResult<ScriptRunResult>>,
 }
 
 impl CommandResult<RunScriptResult> for RunScriptResult {
     fn get_result(&self) -> &RunScriptResult {
-        &self
+        self
     }
 }
 
@@ -35,32 +35,33 @@ impl CommandResult<RunScriptResult> for RunScriptResult {
 pub struct RunScriptArgs {
     /// Name of the script to run
     #[arg(index = 1)]
-    pub script_spec: String
+    pub script_spec: String,
 }
 
-fn exec_package(package: &Package, script_spec: &str, reporter: &impl ProgressReporter) -> Result<ScriptRunResult> {
+fn exec_package(
+    package: &Package,
+    script_spec: &str,
+    reporter: &impl ProgressReporter,
+) -> Result<ScriptRunResult> {
     let script_runner = get_archetype_by_id(package.archetype_id.as_str())
         .unwrap()
         .get_script_runner();
 
-    let result = script_runner.run_script(&ScriptRunContext {
+    script_runner.run_script(&ScriptRunContext {
         script_spec,
         package,
-        reporter
-    });
-
-    return result;
+        reporter,
+    })
 }
 
 impl RunScriptArgs {
-
-    fn exec_interactive(&self, packages: &Vec<Package>) -> Vec<PackageResult<ScriptRunResult>> {
+    fn exec_interactive(&self, packages: &[Package]) -> Vec<PackageResult<ScriptRunResult>> {
         let spinner_style = ProgressStyle::with_template("{prefix:.bold.dim} {spinner} {wide_msg}")
             .unwrap()
             .tick_chars("⠁⠂⠄⡀⢀⠠⠐⠈ ");
         let multi_progress = MultiProgress::new();
 
-        return packages
+        packages
             .iter()
             .map(|package| {
                 let package = package.clone();
@@ -71,75 +72,80 @@ impl RunScriptArgs {
                 progress_bar.set_prefix(format!("[{}]", package.name));
                 progress_bar.enable_steady_tick(Duration::from_millis(100));
 
-                return thread::spawn(move || {
-
-                    let reporter = ProgressBarReporter{
-                        progress_bar: &progress_bar
+                thread::spawn(move || {
+                    let reporter = ProgressBarReporter {
+                        progress_bar: &progress_bar,
                     };
-    
+
                     let result = exec_package(&package, &script_spec, &reporter).unwrap();
 
                     match result.result_type {
                         ScriptRunResultType::Success => {
-                            progress_bar.finish_with_message(format!("{}: {} ✨", result.command, style("Done").green()));
-                        },
+                            progress_bar.finish_with_message(format!(
+                                "{}: {} ✨",
+                                result.command,
+                                style("Done").green()
+                            ));
+                        }
                         ScriptRunResultType::Error(ref message) => {
-                            progress_bar.finish_with_message(format!("{}: {} ❌\n{}", result.command, style(message).red(), result.stderr));
-                        },
-                        ScriptRunResultType::Noop => progress_bar.finish_with_message(format!("Skipped! ⏭️"))
+                            progress_bar.finish_with_message(format!(
+                                "{}: {} ❌\n{}",
+                                result.command,
+                                style(message).red(),
+                                result.stderr
+                            ));
+                        }
+                        ScriptRunResultType::Noop => {
+                            progress_bar.finish_with_message("Skipped! ⏭️".to_string())
+                        }
                     }
 
-                    return PackageResult {
-                        package,
-                        result
-                    };
-                });
+                    PackageResult { package, result }
+                })
             })
             .collect::<Vec<_>>()
             .into_iter()
             .map(|h| h.join().unwrap())
-            .collect();
+            .collect()
     }
 
-    fn exec_non_interactive(&self, packages: &Vec<Package>) -> Vec<PackageResult<ScriptRunResult>> {
-
-        return packages
+    fn exec_non_interactive(&self, packages: &[Package]) -> Vec<PackageResult<ScriptRunResult>> {
+        packages
             .iter()
             .map(|package| {
                 let package = package.clone();
                 let script_spec = self.script_spec.clone();
 
-                return thread::spawn(move || {
-                
-                    let reporter = NoopProgressReporter{};
+                thread::spawn(move || {
+                    let reporter = NoopProgressReporter {};
 
                     let result = exec_package(&package, &script_spec, &reporter).unwrap();
 
-                    return PackageResult {
+                    PackageResult {
                         package: package.clone(),
-                        result
-                    };
-                });
+                        result,
+                    }
+                })
             })
             .collect::<Vec<_>>()
             .into_iter()
             .map(|h| h.join().unwrap())
-            .collect();
-
+            .collect()
     }
 }
 
 impl CommandExec<RunScriptResult> for RunScriptArgs {
-    fn exec(&self, context: &impl super::CommandExecutionContext) -> Box<dyn CommandResult<RunScriptResult>> {
+    fn exec(
+        &self,
+        context: &impl super::CommandExecutionContext,
+    ) -> Box<dyn CommandResult<RunScriptResult>> {
         let packages = context.get_project().get_packages(false);
-        
+
         let results = match context.get_cli().is_interactive() {
             true => self.exec_interactive(&packages),
-            false => self.exec_non_interactive(&packages)
+            false => self.exec_non_interactive(&packages),
         };
 
-        return Box::from(RunScriptResult{
-            results
-        });
+        Box::from(RunScriptResult { results })
     }
 }

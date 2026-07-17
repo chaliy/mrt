@@ -1,2 +1,2 @@
 format:
-	poetry run echo "Format competed!"
+	echo "Format completed!"
