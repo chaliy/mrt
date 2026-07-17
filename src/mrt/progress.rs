@@ -1,7 +1,6 @@
 use log::info;
 
-pub struct LogProgressReporter {
-}
+pub struct LogProgressReporter {}
 
 impl ProgressReporter for LogProgressReporter {
     fn report_output(&self, message: &str) {
