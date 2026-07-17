@@ -3,6 +3,13 @@ name = "mrt"
 version = "1.0.0"
 edition = "2024"
 license = "MIT"
+authors = ["Mykhailo Chalyi <mike@chaliy.name>"]
+description = "A task runner for polyglot monorepos"
+repository = "https://github.com/chaliy/mrt"
+homepage = "https://github.com/chaliy/mrt"
+readme = "README.md"
+keywords = ["monorepo", "task-runner", "cli", "polyglot"]
+categories = ["command-line-utilities", "development-tools::build-utils"]
 
 [lib]
 name = "mrt"
