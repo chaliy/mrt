@@ -1,6 +1,6 @@
 use clap::Args;
 use serde::{Deserialize, Serialize};
-use tabled::{Style, Table};
+use tabled::{builder::Builder, settings::Style};
 
 use mrt::package::Package;
 
@@ -33,7 +33,19 @@ impl CommandExec<ListResult> for ListArgs {
         let result = ListResult { packages };
 
         if context.get_cli().is_interactive() {
-            let mut table = Table::new(&result.packages);
+            let mut builder = Builder::default();
+            builder.push_record(["name", "version", "path", "archetype", "status"]);
+            for package in &result.packages {
+                builder.push_record([
+                    package.name.as_str(),
+                    package.version.as_str(),
+                    package.path.as_str(),
+                    package.archetype_id.as_str(),
+                    package.status.to_string().as_str(),
+                ]);
+            }
+
+            let mut table = builder.build();
             table.with(Style::blank());
 
             println!("{}", table);

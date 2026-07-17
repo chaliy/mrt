@@ -1,6 +1,6 @@
 use crate::{
-    commands::{list::ListArgs, run_script::RunScriptArgs},
     Cli,
+    commands::{list::ListArgs, run_script::RunScriptArgs},
 };
 use std::{env, path::PathBuf};
 

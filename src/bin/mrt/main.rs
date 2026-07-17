@@ -1,6 +1,6 @@
 use clap::{CommandFactory, Parser, Subcommand, ValueHint};
-use clap_complete::{generate, Shell};
-use commands::{list::ListArgs, run_script::RunScriptArgs, CommandExec, CommandExecutionContext};
+use clap_complete::{Shell, generate};
+use commands::{CommandExec, CommandExecutionContext, list::ListArgs, run_script::RunScriptArgs};
 use mrt::project::Project;
 use output::write_command_stdout_as_json;
 use serde::ser;
