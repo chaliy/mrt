@@ -1,66 +1,76 @@
-# MRT - MonoRepo Tool
+# MRT — Monorepo Tool
 
-cli to serve polyglot monorepo
+MRT discovers packages in a polyglot monorepo and runs the same script across
+them. It currently understands npm and Poetry package metadata and can execute
+npm scripts or Make targets.
 
-## Features
+## Install
 
-- [x] List package in the monorepo - `mrt list`
-- [x] Ability to execute "scripts" across monorepo: start, build, test, format, etc - `mrt run [script]`
-- [x] Support for nodejs/npm packages and apps
-- [ ] Support for python/poetry packages and apps
-- [ ] Support for rust/cargo packages and apps
-- [ ] Support for custom packages and apps
-- [x] Support for Makefile as extra scripts to run
-- ...
+Install the latest development version with Cargo:
 
-## How to install
-
-If you have rust/cargo installed, you can install `mrt` with:
-
-```
-cargo install --git https://github.com/chaliy/mrt.git
-mrt --help
+```console
+cargo install --git https://github.com/chaliy/mrt.git --locked
 ```
 
-### ZSH
+Versioned releases also provide prebuilt binaries for Linux, macOS, and Windows
+on the [GitHub Releases](https://github.com/chaliy/mrt/releases) page.
 
+## Use
+
+MRT looks for packages under `packages/*` and `apps/*`. Pass a manifest path to
+set the monorepo root:
+
+```console
+mrt --manifest ./mrt.yml list
+mrt --manifest ./mrt.yml list --all
+mrt --manifest ./mrt.yml run build
+mrt --manifest ./mrt.yml --output json list
 ```
-mrt completion zsh > $ZSH/cache/completions/_mrt
-compinit
-mrt <TAB>
+
+Without `--manifest`, MRT uses the current directory as the project root.
+`list --all` includes directories whose package metadata could not be read or
+whose package type could not be detected.
+
+### Shell completion
+
+Generate completion scripts for Bash, Elvish, Fish, PowerShell, or Zsh:
+
+```console
+mrt completion zsh > _mrt
 ```
 
-## Idea
+## Supported packages
 
-Build tool that will help with common operations on polyglot monorepo. Run "scripts" across all packages, do release management, etc. 
+| Package type | Detection | Script runner |
+| --- | --- | --- |
+| npm | `package.json` | `make <script>`, then `npm run <script>` |
+| Poetry | `pyproject.toml` with `[tool.poetry]` | `make <script>` |
 
-- Run "scripts" across monorepo like build, test, fmt, etc - `mrt run [script]`
-- Polyglot packages, mrt should run any. Initially nodejs/npm, python/poetry, Makefile and custom
-- Dependency graph, if packages depends on each other, mrt should know
-- Be aware of changes, detect changes and run scripts against changes
-- Allow filter / group / list packages. So for example need to find a way to run "test" script only on "ui" packages
+When both a Make target and a package-manager script exist, MRT uses the Make
+target first.
 
-### More?
+## Develop
 
-- Help with CI, for example command to proxy package command only when something has been changed
-- Handle initialization of dev environment
-- Handle running monorepo (e.g. microservices docker-compose)
-- Version / release management. Single repo version, or per package version
+The repository pins its Rust toolchain. Run the same core checks as CI with:
 
-## Design
+```console
+cargo fmt --all -- --check
+cargo clippy --locked --all-targets --all-features -- -D warnings
+cargo test --locked --all-features
+cargo deny check
+cargo audit
+```
 
-### CLI
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete workflow.
 
-`mrt list` - List all monorepo packages
-`mrt list [packages_spec]` - List specified packages
+## Roadmap
 
-`mrt run [packages_spec] [script]` - Run script for specified packages
-`mrt run [script]` - Run script for all specified packages
+- Read package globs and configuration from the manifest
+- Add native Cargo package support
+- Filter packages by name, path, type, or changed files
+- Model package dependencies and execution order
+- Coordinate versioning and releases across packages
 
+## License
 
-`[packages_spec]` - package | package1,package2 | pa* | packages/pack* 
-
-## Inspiration
-
-- Lerna / Nx - NodeJS monorepo tools
-- Bazel - monorepo build tool
+MRT is available under the [MIT License](LICENSE).
